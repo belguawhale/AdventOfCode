@@ -1,4 +1,7 @@
 # part 1
+from typing import List
+
+
 class Point:
     def __init__(self, x=0, y=0):
         self.x = x
@@ -35,11 +38,13 @@ class Point:
         return ret
 
 
-def print_rope(head: Point, tail: Point, size=5):
+def print_rope(rope: List[Point], size=5):
     dimension = size * 2 + 1
     canvas = [["."] * dimension for _ in range(dimension)]
-    canvas[tail.y + size][tail.x + size] = "T"
-    canvas[head.y + size][head.x + size] = "H"
+    for i in reversed(range(len(rope))):
+        point = rope[i]
+        canvas[point.y + size][point.x + size] = str(i)
+    canvas[rope[0].y + size][rope[0].x + size] = "H"
 
     print("\n".join("".join(line) for line in canvas))
 
@@ -60,21 +65,21 @@ DIRECTIONS = {
 }
 
 tail_visited = {Point(0, 0)}
-head = Point(0, 0)
-tail = Point(0, 0)
+rope = [Point(0, 0), Point(0, 0)]
 
 with open("input.txt", "r") as f:
     for line in f:
         direction, amount = line.strip().split(" ")
         amount = int(amount)
         for _ in range(amount):
-            # print_rope(head, tail)
-            # print("head", head, "tail", tail, "direction", direction)
+            # print_rope(rope)
             head_movement = DIRECTIONS[direction]
-            head += head_movement
+            rope[0] += head_movement
 
-            tail = follow(head, tail)
-            tail_visited.add(tail)
+            for i in range(len(rope) - 1):
+                rope[i + 1] = follow(rope[i], rope[i + 1])
+
+            tail_visited.add(rope[-1])
 
 
 print(len(tail_visited))

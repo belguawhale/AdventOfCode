@@ -3,6 +3,7 @@
 # Advent of code
 input.txt
 input_example.txt
+input_example2.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
