@@ -41,6 +41,7 @@ class Point:
 def print_rope(rope: List[Point], size=5):
     dimension = size * 2 + 1
     canvas = [["."] * dimension for _ in range(dimension)]
+    canvas[size][size] = "s"
     for i in reversed(range(len(rope))):
         point = rope[i]
         canvas[point.y + size][point.x + size] = str(i)
@@ -81,5 +82,26 @@ with open("input.txt", "r") as f:
 
             tail_visited.add(rope[-1])
 
+print(len(tail_visited))
+
+# part 2
+
+tail_visited = {Point(0, 0)}
+rope = [Point(0, 0) for _ in range(10)]
+
+with open("input.txt", "r") as f:
+    for line in f:
+        direction, amount = line.strip().split(" ")
+        amount = int(amount)
+        # print_rope(rope, 15)
+        for _ in range(amount):
+            head_movement = DIRECTIONS[direction]
+            rope[0] += head_movement
+
+            for i in range(len(rope) - 1):
+                rope[i + 1] = follow(rope[i], rope[i + 1])
+
+            tail_visited.add(rope[-1])
+# print_rope(rope, 15)
 
 print(len(tail_visited))
