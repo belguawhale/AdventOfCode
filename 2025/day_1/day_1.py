@@ -36,5 +36,63 @@ def part_1(rotations: List[int]):
 example = parse_file("input_example.txt")
 print(part_1(example))
 
-inp_1 = parse_file("input.txt")
-print(part_1(inp_1))
+inp = parse_file("input.txt")
+print(part_1(inp))
+
+
+def part_2(rotations: List[int], debug=False):
+    num_clicks = 0
+    dial = Dial()
+    for rotation in rotations:
+        new_pos_before_modulo = rotation + dial.num
+        if debug:
+            print(
+                f"num_clicks {num_clicks} dial {dial.num} rotation {rotation} new_pos_before_modulo {new_pos_before_modulo}"
+            )
+        if new_pos_before_modulo >= Dial.DIAL_SIZE:
+            # e.g. rotation to 234 is 2 clicks + new position of 34
+            # e.g. rotation to 300 is 3 clicks + new position of 0
+            num_clicks += new_pos_before_modulo // Dial.DIAL_SIZE
+        elif new_pos_before_modulo < 0:
+            # if dial.num > 0:
+            # if we started at 0, rotating left is not a click
+            # num_clicks += 1
+            # e.g. rotation to -234 is 3 clicks + new position of 66
+            # e.g. rotation to -300 is 3 clicks starting at 0 and 4 clicks starting at >0
+            num_clicks -= new_pos_before_modulo // Dial.DIAL_SIZE
+
+        # click when we end on 0 position
+        # num_clicks += 1
+        dial.rotate(rotation)
+    if debug:
+        print(f"FINAL num_clicks {num_clicks} dial {dial.num}")
+    return num_clicks
+
+
+print(part_2(example, debug=True))
+print(part_2(inp))
+
+# should click once on 50 (dial: 0), once on 100, twice on +/- 200
+test_cases = [
+    [[50, 100, -200], 4],
+    [[50, 100, 200], 4],
+    [[-50], 1],
+    [[50], 1],
+    [[50, 75, 25], 2],
+    [[-50, -75, -25], 2],
+    [[49, 2, -2, 1], 3],
+    [[-49, -2, 2, -1], 3],
+]
+
+
+def test(cases):
+    for inp, expected in cases:
+        actual = part_2(inp)
+        if actual == expected:
+            print(f"+ correct {inp}")
+        else:
+            print(f"- incorrect {inp}, got {actual}, expected {expected}")
+            part_2(inp, debug=True)
+
+
+test(test_cases)
