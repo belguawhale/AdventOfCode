@@ -44,25 +44,16 @@ def part_2(rotations: List[int], debug=False):
     num_clicks = 0
     dial = Dial()
     for rotation in rotations:
-        new_pos_before_modulo = rotation + dial.num
         if debug:
-            print(
-                f"num_clicks {num_clicks} dial {dial.num} rotation {rotation} new_pos_before_modulo {new_pos_before_modulo}"
-            )
-        if new_pos_before_modulo >= Dial.DIAL_SIZE:
+            print(f"num_clicks {num_clicks} dial {dial.num} rotation {rotation}")
+        if rotation > 0:
             # e.g. rotation to 234 is 2 clicks + new position of 34
             # e.g. rotation to 300 is 3 clicks + new position of 0
-            num_clicks += new_pos_before_modulo // Dial.DIAL_SIZE
-        elif new_pos_before_modulo < 0:
-            # if dial.num > 0:
-            # if we started at 0, rotating left is not a click
-            # num_clicks += 1
-            # e.g. rotation to -234 is 3 clicks + new position of 66
-            # e.g. rotation to -300 is 3 clicks starting at 0 and 4 clicks starting at >0
-            num_clicks -= new_pos_before_modulo // Dial.DIAL_SIZE
-
-        # click when we end on 0 position
-        # num_clicks += 1
+            num_clicks += (rotation + dial.num) // Dial.DIAL_SIZE
+        else:
+            # mirror dial state and rotation, then count in the positive direction - integer division doesn't count certain 0 crossings in the negative direction
+            mirrored_dial = (Dial.DIAL_SIZE - dial.num) % Dial.DIAL_SIZE
+            num_clicks += (mirrored_dial - rotation) // Dial.DIAL_SIZE
         dial.rotate(rotation)
     if debug:
         print(f"FINAL num_clicks {num_clicks} dial {dial.num}")
