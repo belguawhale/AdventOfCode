@@ -19,10 +19,6 @@ def parse_file(file: str) -> InputType:
     return ranges, ingredients
 
 
-def merge_ranges(ranges: List[InputRange]) -> List[InputRange]:
-    return ranges
-
-
 def part_1(inp: InputType, debug=False):
     ranges, ingredients = inp
     count = 0
@@ -60,14 +56,64 @@ def test(cases, fn):
 test(test_cases_part_1, part_1)
 
 print("===== Part 2 =====")
-exit()
+
+
+def merge_ranges(ranges: List[InputRange], debug=False) -> List[InputRange]:
+    # how to merge ranges together?
+    # E.g. 10-14, 12-18, 16-20 => 10-20
+    # sort ranges by first num
+    # iterate.
+    #   if a range's start falls inside the range of one seen before,
+    #   extend that range's end point to max(prev_range.end, range.end).
+    #   if the new range's end is greater than an existing range's start, also merge them.
+    #     this can trigger at most one merge, since total overlaps are filtered out by sorting
+    #   invariant is that no ranges in the output array overlap.
+
+    merged_ranges: List[InputRange] = []
+    sorted_ranges_by_first = sorted(ranges, key=lambda r: r[0])
+
+    for r in sorted_ranges_by_first:
+
+        is_overlapping_existing_range = False
+        start, end = r
+        # the start <= m_end check can be made more efficient by using a BST for m_end
+        # so determining start <= m_end is O(logn)
+        # we know m_start <= start already since we're processing in sorted order
+        # updating new_end is also O(logn) to reinsert the updated end
+        for i, (m_start, m_end) in enumerate(merged_ranges):
+            if start <= m_end:
+                is_overlapping_existing_range = True
+                new_end = max(end, m_end)
+                merged_ranges[i] = (m_start, new_end)
+
+        if not is_overlapping_existing_range:
+            merged_ranges.append(r)
+        if debug:
+            print(r, merged_ranges)
+    return merged_ranges
+
+
+def part_2(inp: InputType, debug=False):
+    ranges = inp[0]
+    merged_ranges = merge_ranges(ranges, debug)
+    if debug:
+        print(merged_ranges)
+
+    count = 0
+    for r in merged_ranges:
+        count += r[1] - r[0] + 1
+    return count
+
 
 example = parse_file("input_example.txt")
-print(part_2(example))
+print(part_2(example, True))
 
 inp = parse_file("input.txt")
 print(part_2(inp))
 
 test_cases_part_2 = [
-    [parse_file("input_example.txt"), 43],
+    [parse_file("input_example.txt"), 14],
+    [[[[1, 2], [3, 4], [2, 7]], []], 7],
 ]
+
+test(test_cases_part_2, part_2)
