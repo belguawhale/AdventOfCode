@@ -69,27 +69,32 @@ def merge_ranges(ranges: List[InputRange], debug=False) -> List[InputRange]:
     #     this can trigger at most one merge, since total overlaps are filtered out by sorting
     #   invariant is that no ranges in the output array overlap.
 
-    merged_ranges: List[InputRange] = []
     sorted_ranges_by_first = sorted(ranges, key=lambda r: r[0])
+    merged_ranges: List[InputRange] = [sorted_ranges_by_first[0]]
 
-    for r in sorted_ranges_by_first:
-
-        is_overlapping_existing_range = False
-        start, end = r
+    for i in range(1, len(ranges)):
+        start, end = sorted_ranges_by_first[i]
         # the start <= m_end check can be made more efficient by using a BST for m_end
         # so determining start <= m_end is O(logn)
         # we know m_start <= start already since we're processing in sorted order
         # updating new_end is also O(logn) to reinsert the updated end
-        for i, (m_start, m_end) in enumerate(merged_ranges):
-            if start <= m_end:
-                is_overlapping_existing_range = True
-                new_end = max(end, m_end)
-                merged_ranges[i] = (m_start, new_end)
+        # so overall O(nlogn), sort O(nlogn) + n*O(logn)
 
-        if not is_overlapping_existing_range:
-            merged_ranges.append(r)
+        # EDIT: we don't even need to check all previously merged ranges, just the last merged range
+        # since any overlapping intervals would have extended it already
+        # was worried about a [1, 2], [3, 4], [2, 7] case but sorting orders it in the best way.
+
+        m_start, m_end = merged_ranges[-1]
+        if start <= m_end:
+            new_end = max(end, m_end)
+            merged_ranges[-1] = (m_start, new_end)
+            if debug:
+                print((start, end), merged_ranges)
+            continue
+
+        merged_ranges.append((start, end))
         if debug:
-            print(r, merged_ranges)
+            print((start, end), merged_ranges)
     return merged_ranges
 
 
