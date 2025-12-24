@@ -54,8 +54,24 @@ def test(cases, fn):
 
 test(test_cases_part_1, part_1)
 
-exit()
 print("===== Part 2 =====")
+
+parse_file2 = parse_file
+
+
+def part_2(inp: InputType, debug=False):
+    start, splitters = inp
+    beams = [0] * 141  # len of input array
+    beams[start] = 1
+
+    for row in splitters:
+        for s in row:
+            num_paths = beams[s]
+            beams[s] = 0
+            beams[s - 1] += num_paths
+            beams[s + 1] += num_paths
+    return sum(beams)
+
 
 example = parse_file2("input_example.txt")
 print(part_2(example))
@@ -64,7 +80,7 @@ inp = parse_file2("input.txt")
 print(part_2(inp))
 
 test_cases_part_2 = [
-    [parse_file2("input_example.txt"), 3263827],
+    [parse_file2("input_example.txt"), 40],
 ]
 
 test(test_cases_part_2, part_2)
