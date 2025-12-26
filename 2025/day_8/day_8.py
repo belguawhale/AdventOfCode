@@ -110,15 +110,78 @@ def test(cases, fn):
 
 test(test_cases_part_1, lambda inp, debug=False: part_1(inp, 10, debug))
 
-exit()
-
 print("===== Part 2 =====")
 
 parse_file2 = parse_file
 
 
 def part_2(inp: InputType, debug=False):
-    pass
+    n = len(inp)
+    # each node will belong to a circuit id
+    circuits = [0] * n
+    next_circuit = 1
+
+    # this is now a minheap since order matters
+    # simply push each (distance, i, j), then pop_min until circuit condition is reached
+
+    # O(n^2 log n) for construction, can prob reduce the n^2 part by preprocessing points?
+    # O(n^2 log n) worst case looping over all adjacencies, in practise not sure how to prove we'll exit earlier
+    # circuit merging is currently O(n) which is not great
+
+    # dist, i, j
+    adjacency_minheap: List[Tuple[int, int, int]] = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            dist = inp[i].distance_sq(inp[j])
+            heapq.heappush(adjacency_minheap, (dist, i, j))
+
+    # faster way to lookup what nodes are in a circuit
+    circuit_sets: List[Set[int]] = [set(range(n))] + [set() for _ in range(n)]
+    while adj := heapq.heappop(adjacency_minheap):
+        _, i, j = adj
+        existing_circuit = max(circuits[i], circuits[j])
+        # join boxes at indexes i and j
+        if debug:
+            print("joining", inp[i], inp[j], end="")
+        if circuits[i] == circuits[j] == 0:
+            if debug:
+                print(" adding to new circuit", next_circuit)
+            circuits[i] = circuits[j] = next_circuit
+            circuit_sets[next_circuit].add(i)
+            circuit_sets[next_circuit].add(j)
+            next_circuit += 1
+        elif circuits[i] == circuits[j]:
+            if debug:
+                print(" already part of existing circuit", existing_circuit)
+            continue
+        else:
+            canonical_circuit = min(circuits[i], circuits[j])
+            existing_circuit = max(circuits[i], circuits[j])
+            if canonical_circuit:
+                # both nodes part of different circuits
+                if debug:
+                    print(" merging circuits", existing_circuit, canonical_circuit)
+
+                # move all nodes from one circuit into the other
+                for idx in circuit_sets[existing_circuit]:
+                    circuits[idx] = canonical_circuit
+                circuit_sets[canonical_circuit].update(circuit_sets[existing_circuit])
+                circuit_sets[existing_circuit] = set()
+            else:
+                if debug:
+                    print(" adding to existing circuit", existing_circuit)
+                # one node disconnected, join with existing circuit
+                circuits[i] = circuits[j] = existing_circuit
+                circuit_sets[existing_circuit].add(i)
+                circuit_sets[existing_circuit].add(j)
+
+            changed_circuit = canonical_circuit or existing_circuit
+            if len(circuit_sets[changed_circuit]) == n:
+                break
+
+        if debug:
+            print("", "circuits", circuits)
+    return inp[i].x * inp[j].x
 
 
 example = parse_file2("input_example.txt")
