@@ -46,25 +46,29 @@ def part_1(inp: InputType, num_connections: int, debug=False):
             sorted_adjacencies.append((dist, i, j))
     sorted_adjacencies.sort(key=lambda a: a[0])
 
-    num_connections_made = 0
-
-    for _, i, j in sorted_adjacencies:
+    for _, i, j in sorted_adjacencies[:num_connections]:
         if debug:
             print("joining", i, j, end="")
         existing_circuit = max(circuits[i], circuits[j])
         # join boxes at indexes i and j
-        num_connections_made += 1
         if existing_circuit:
             if debug:
                 print(" adding to existing circuit", existing_circuit)
-            circuits[i] = circuits[j] = existing_circuit
+            if circuits[i] == 0 or circuits[j] == 0:
+                # one node disconnected, join with existing circuit
+                circuits[i] = circuits[j] = existing_circuit
+            else:
+                # both nodes already part of different circuits
+                # need to move all nodes from one circuit into the other
+                canonical_circuit = min(circuits[i], circuits[j])
+                for idx, circuit in enumerate(circuits):
+                    if circuit == existing_circuit:
+                        circuits[idx] = canonical_circuit
         else:
             if debug:
                 print(" adding to new circuit", next_circuit)
             circuits[i] = circuits[j] = next_circuit
             next_circuit += 1
-        if num_connections_made == num_connections:
-            break
     # determine circuit sizes by id
     circuit_sizes = [0] * n
     for c in circuits:
@@ -87,8 +91,8 @@ print("===== Part 1 =====")
 example = parse_file("input_example.txt")
 print(part_1(example, 10))
 
-# inp = parse_file("input.txt")
-# print(part_1(inp, 1000))
+inp = parse_file("input.txt")
+print(part_1(inp, 1000))
 
 test_cases_part_1 = [
     [parse_file("input_example.txt"), 40],
