@@ -2,6 +2,7 @@ from typing import List, Tuple, Set
 import math
 import re
 from dataclasses import dataclass
+import heapq
 
 
 @dataclass
@@ -30,23 +31,21 @@ def parse_file(file: str) -> InputType:
 
 def part_1(inp: InputType, num_connections: int, debug=False):
     n = len(inp)
-    adjacency_matrix = [[0] * n for _ in range(n)]
     # each node will belong to a circuit id
     circuits = [0] * n
     next_circuit = 1
 
-    # terrible but the idea is there
-    # ideally we'd use a fixed length priority queue (heap?) to track the
-    # shortest num_connections distances.
-    sorted_adjacencies = []
+    # this is a maxheap with length num_connections.
+    # we pushpop each (distance, i, j) so it maintains the n smallest distances
+    # this is O(n^2 log c), can prob reduce the n^2 part by preprocessing points?
+    # we don't care about the order so no need to sort after
+    n_smallest_adjacencies = [(1e9, 0, 0)] * num_connections
     for i in range(n):
         for j in range(i + 1, n):
             dist = inp[i].distance_sq(inp[j])
-            adjacency_matrix[i][j] = dist
-            sorted_adjacencies.append((dist, i, j))
-    sorted_adjacencies.sort(key=lambda a: a[0])
+            heapq.heappushpop_max(n_smallest_adjacencies, (dist, i, j))
 
-    for _, i, j in sorted_adjacencies[:num_connections]:
+    for _, i, j in n_smallest_adjacencies:
         if debug:
             print("joining", i, j, end="")
         existing_circuit = max(circuits[i], circuits[j])
@@ -129,7 +128,7 @@ inp = parse_file2("input.txt")
 print(part_2(inp))
 
 test_cases_part_2 = [
-    [parse_file2("input_example.txt"), 40],
+    [parse_file2("input_example.txt"), 25272],
 ]
 
 test(test_cases_part_2, part_2)
