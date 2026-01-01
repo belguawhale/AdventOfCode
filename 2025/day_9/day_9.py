@@ -1,4 +1,4 @@
-from typing import List, Tuple, Set
+from typing import List, Tuple, Set, Dict
 import math
 import re
 from dataclasses import dataclass
@@ -90,6 +90,14 @@ def part_2(inp: InputType, debug=False):
     # for horizontal side (a, y), (b, y), we check all vertical edges between a and b if endpoints are above y and below y.
     # and vice versa.
     # we preprocess the input, storing horizontal and vertical edges. sort horizontal by y pos and vertical by x pos.
+    # but what if an edge has one of its endpoints on a side of a rectangle?
+    # if the edge points into the rectangle, then it must cut out some area from the rectangle and invalidate it.
+    #   (one side of the edge is inside and one side of the edge is outside the original shape)
+    # if the edge points away from the rectangle, the side doesn't matter.
+    # for edges originating from a corner of the rectangle, we just need to verify the shape of the corner
+    #   corresponds with the shape of the rectangle (e.g. top left to top left)
+    #   update: this didn't end up being relevant to our input, but worth noting. we can find the left-most two corners
+    #   in O(n) and provide a "shape" of each corner by iterating through each edge of input
 
     # a line is (pos, start, end)
     horizontal_lines: List[Line] = []
@@ -118,6 +126,8 @@ def part_2(inp: InputType, debug=False):
     horizontal_lines.sort(key=lambda line: line[0])
     vertical_lines.sort(key=lambda line: line[0])
 
+    corners: Dict[Point2D, str] = {}
+
     if debug:
         print("horz", horizontal_lines)
         print("vert", vertical_lines)
@@ -139,11 +149,13 @@ def part_2(inp: InputType, debug=False):
             if low < check < high:
                 # line intersects our rectangle
                 return False
-            # handle cases where line starts/ends on rectangle edge, not at corners
+            # handle cases where line starts/ends on rectangle edge (e.g. O)
             # O## ###
             # # ### #
             # #     #
             # ######O
+
+            # lines starting on rectangle edge and pointing into the rectangle are invalid
             if valid_direction_is_less and low == check:
                 return False
             elif not valid_direction_is_less and check == high:
@@ -165,10 +177,13 @@ def part_2(inp: InputType, debug=False):
                 "area",
                 p1.area(p2),
             )
-        left = check_line(horizontal_lines, min_y, max_y, min_x, False)
-        right = check_line(horizontal_lines, min_y, max_y, max_x, True)
-        bottom = check_line(vertical_lines, min_x, max_x, min_y, False)
-        top = check_line(vertical_lines, min_x, max_x, max_y, True)
+        if min_x == max_x or min_y == max_y:
+            # 1-width rectangles are always valid
+            return True
+        left = check_line(horizontal_lines, min_y, max_y, min_x, True)
+        right = check_line(horizontal_lines, min_y, max_y, max_x, False)
+        top = check_line(vertical_lines, min_x, max_x, min_y, True)
+        bottom = check_line(vertical_lines, min_x, max_x, max_y, False)
 
         if debug:
             print(
@@ -203,9 +218,8 @@ def part_2(inp: InputType, debug=False):
 example = parse_file2("input_example.txt")
 print(part_2(example))
 
-# 1430 is too low :(
-# inp = parse_file2("input.txt")
-# print(part_2(inp))
+inp = parse_file2("input.txt")
+print(part_2(inp))
 
 
 def build_test_case(s: str) -> InputType:
@@ -230,9 +244,8 @@ def print_test_case(inp: List[Point2D]):
     rows = []
     for row in out:
         row_str = "".join(row).rstrip()
-        if row_str:
-            rows.append(row_str)
-    print("\n".join(rows))
+        rows.append(row_str)
+    print("\n".join(rows).strip("\n"))
 
 
 test_cases_part_2 = [
@@ -247,16 +260,16 @@ test_cases_part_2 = [
         ),
         15,
     ],
-    # [
-    #     build_test_case(
-    #         """
-    #         a b e f
-    #           c d
-    #
-    #         h     g"""
-    #     ),
-    #     21,
-    # ],
+    [
+        build_test_case(
+            """
+            a b e f
+              c d g h
+                  j i
+            l     k"""
+        ),
+        21,
+    ],
 ]
 
 
